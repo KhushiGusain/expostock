@@ -70,6 +70,22 @@ export interface CompanyOverview {
   ExDividendDate: string;
 }
 
+export interface SearchResult {
+  '1. symbol': string;
+  '2. name': string;
+  '3. type': string;
+  '4. region': string;
+  '5. marketOpen': string;
+  '6. marketClose': string;
+  '7. timezone': string;
+  '8. currency': string;
+  '9. matchScore': string;
+}
+
+export interface SymbolSearchResponse {
+  bestMatches: SearchResult[];
+}
+
 // API service class
 class ApiService {
   private apiKey: string;
@@ -164,20 +180,49 @@ class ApiService {
     }
   }
 
-  // Search for stocks
-  async searchStocks(query: string): Promise<any> {
+  // Search for stocks with symbol search
+  async searchStocks(query: string): Promise<SymbolSearchResponse> {
     try {
+      // Don't search if query is too short
+      if (!query || query.trim().length < 1) {
+        return { bestMatches: [] };
+      }
+
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'SYMBOL_SEARCH',
-          keywords: query,
+          keywords: query.trim(),
           apikey: this.apiKey,
         },
+        timeout: 8000, // 8 second timeout
       });
+
+      // Check for API errors
+      if (response.data.Note) {
+        throw new Error('API rate limit exceeded. Please try again later.');
+      }
+
+      if (response.data.Information) {
+        throw new Error('API rate limit exceeded. Please try again later.');
+      }
+
+      // Return empty results if no matches found
+      if (!response.data.bestMatches) {
+        return { bestMatches: [] };
+      }
+
       return response.data;
     } catch (error) {
       console.error(`Error searching stocks with query ${query}:`, error);
-      throw new Error('Failed to search stocks');
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Search request timed out. Please try again.');
+        }
+        if (error.response?.status === 429) {
+          throw new Error('Search rate limit exceeded. Please try again later.');
+        }
+      }
+      throw new Error('Failed to search stocks. Please try again.');
     }
   }
 }
@@ -197,6 +242,19 @@ export function formatStockData(quote: StockQuote): any {
     change: quote.change_percentage,
     isPositive: changePercent >= 0,
     icon: getDefaultIcon(quote.ticker),
+  };
+}
+
+// Helper function to format search results for UI
+export function formatSearchResult(result: SearchResult) {
+  return {
+    symbol: result['1. symbol'],
+    name: result['2. name'],
+    type: result['3. type'],
+    region: result['4. region'],
+    currency: result['8. currency'],
+    matchScore: parseFloat(result['9. matchScore']),
+    icon: getDefaultIcon(result['1. symbol']),
   };
 }
 

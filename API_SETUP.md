@@ -50,6 +50,14 @@ yarn add axios
 - Pull-to-refresh functionality
 - Error handling with retry options
 
+✅ **Stock Search**: Auto-complete search functionality powered by Alpha Vantage SYMBOL_SEARCH
+- Real-time symbol and company search
+- Auto-complete with debounced search (300ms delay)
+- Search results show symbol, company name, type, region, and match score
+- Up to 8 search results displayed, sorted by match score
+- Tapping a result navigates to stock details page
+- Search timeout protection and error handling
+
 ## API Limitations
 
 - **Free Tier**: 25 requests per day, 5 requests per minute
@@ -83,7 +91,7 @@ For production apps, consider:
 2. Add it to your `.env` file
 3. Test the app with real data
 4. Consider implementing additional features like:
-   - Stock search functionality
+   - ✅ Stock search functionality (implemented)
    - Individual stock details
    - Watchlist with real-time updates
    - Charts and historical data

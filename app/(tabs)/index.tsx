@@ -16,6 +16,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StockCard } from '@/components/StockCard';
+import { SearchBox } from '@/components/SearchBox';
 import { Colors } from '@/constants/Colors';
 import { FontFamily } from '@/constants/Fonts';
 import { apiService, formatStockData, StockQuote } from '@/services/api';
@@ -138,12 +139,7 @@ export default function HomeScreen() {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={20} color="#9CA3AF" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search here"
-            placeholderTextColor="#9CA3AF"
-          />
+          <SearchBox placeholder="Search stocks, companies..." />
         </View>
 
         {error && !loading && (
@@ -289,69 +285,97 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 16,
     backgroundColor: Colors.light.cardBackground,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: '#E6F4F8',
   },
   welcomeText: {
     flex: 1,
   },
   welcomeBack: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.light.textTertiary,
     fontFamily: FontFamily.regular,
+    marginBottom: 2,
   },
   userName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: FontFamily.bold,
     color: Colors.light.textPrimary,
-    marginTop: 2,
+    letterSpacing: -0.2,
   },
   notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3F4F6',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   notificationIcon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     tintColor: Colors.light.textSecondary,
   },
   searchContainer: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 24,
+    zIndex: 999999,
+    elevation: 1000,
+  },
+  searchBarPreview: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
-    marginHorizontal: 20,
-    marginBottom: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E6F4F8',
+    gap: 12,
   },
-  searchInput: {
+  searchPlaceholder: {
     flex: 1,
-    marginLeft: 12,
     fontSize: 16,
-    color: Colors.light.textPrimary,
+    color: '#9CA3AF',
     fontFamily: FontFamily.regular,
   },
   section: {
     marginBottom: 24,
+    zIndex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',

@@ -502,61 +502,47 @@ export default function StockDetailsScreen() {
           )}
         </View>
 
-        {/* Market Data */}
-        <View style={styles.marketDataContainer}>
-          <Text style={styles.sectionTitle}>Market Data</Text>
-          <View style={styles.marketDataRow}>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>Market Cap</Text>
-              <Text style={styles.marketDataValue}>{stockData.marketCap}</Text>
-            </View>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>Volume</Text>
-              <Text style={styles.marketDataValue}>{stockData.volume}</Text>
-            </View>
+        {/* Description */}
+        {stockData.description && stockData.description !== 'No description available' && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.descriptionText}>
+              {stockData.description}
+            </Text>
           </View>
-          
-          <View style={styles.marketDataRow}>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>P/E Ratio</Text>
-              <Text style={styles.marketDataValue}>{stockData.peRatio}</Text>
+        )}
+
+        {/* Market Data Cards */}
+        <View style={styles.marketDataSection}>
+          <View style={styles.marketDataGrid}>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>Market Cap</Text>
+              <Text style={styles.metricValue}>{stockData.marketCap}</Text>
             </View>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>EPS</Text>
-              <Text style={styles.marketDataValue}>{stockData.eps}</Text>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>Volume</Text>
+              <Text style={styles.metricValue}>{stockData.volume}</Text>
             </View>
-          </View>
-          
-          <View style={styles.marketDataRow}>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>52W High</Text>
-              <Text style={styles.marketDataValue}>₹{stockData.weekHigh52}</Text>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>P/E Ratio</Text>
+              <Text style={styles.metricValue}>{stockData.peRatio}x</Text>
             </View>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>52W Low</Text>
-              <Text style={styles.marketDataValue}>₹{stockData.weekLow52}</Text>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>Day Range</Text>
+              <Text style={styles.metricValue}>{stockData.dayRange}</Text>
             </View>
-          </View>
-          
-          <View style={styles.marketDataRow}>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>Beta</Text>
-              <Text style={styles.marketDataValue}>{stockData.beta}</Text>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>52W High</Text>
+              <Text style={styles.metricValue}>₹{stockData.weekHigh52}</Text>
             </View>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>Dividend Yield</Text>
-              <Text style={styles.marketDataValue}>{stockData.dividendYield}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.marketDataRow}>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>50D MA</Text>
-              <Text style={styles.marketDataValue}>₹{stockData.movingAvg50}</Text>
-            </View>
-            <View style={styles.marketDataItem}>
-              <Text style={styles.marketDataLabel}>200D MA</Text>
-              <Text style={styles.marketDataValue}>₹{stockData.movingAvg200}</Text>
+            
+            <View style={styles.metricCard}>
+              <Text style={styles.metricLabel}>52W Low</Text>
+              <Text style={styles.metricValue}>₹{stockData.weekLow52}</Text>
             </View>
           </View>
         </View>
@@ -630,37 +616,37 @@ const styles = StyleSheet.create({
   },
   stockInfoCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    marginBottom: 16,
+    borderRadius: 10,
+    padding: 16,
+    marginTop: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E6F4F8',
   },
   stockHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   stockIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: 'rgba(230, 247, 242, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   stockTitleSection: {
     flex: 1,
   },
   stockSymbol: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: FontFamily.bold,
     color: Colors.light.textPrimary,
   },
   stockName: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.light.textSecondary,
     fontFamily: FontFamily.regular,
     marginTop: 2,
@@ -671,7 +657,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   currentPrice: {
-    fontSize: 32,
+    fontSize: 24,
     fontFamily: FontFamily.bold,
     color: Colors.light.textPrimary,
   },
@@ -679,24 +665,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   changeText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: FontFamily.bold,
   },
   changeAmount: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: FontFamily.regular,
     marginTop: 2,
   },
   chartContainer: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E6F4F8',
   },
   chartPlaceholder: {
-    height: 200,
+    height: 160,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
@@ -764,17 +750,17 @@ const styles = StyleSheet.create({
   },
   companyInfoContainer: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E6F4F8',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: FontFamily.bold,
     color: Colors.light.textPrimary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   infoRow: {
     flexDirection: 'row',
@@ -805,39 +791,55 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
   },
-  marketDataContainer: {
+  descriptionContainer: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E6F4F8',
   },
-  marketDataRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  marketDataSection: {
     marginBottom: 16,
   },
-  marketDataItem: {
-    flex: 1,
+  marketDataGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  marketDataLabel: {
-    fontSize: 14,
+  metricCard: {
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: 10,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E6F4F8',
+    width: '48%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  metricLabel: {
+    fontSize: 12,
     color: Colors.light.textSecondary,
     fontFamily: FontFamily.regular,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  marketDataValue: {
+  metricValue: {
     fontSize: 16,
     color: Colors.light.textPrimary,
     fontFamily: FontFamily.bold,
   },
   watchlistButton: {
     backgroundColor: '#11B981',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
   },
   watchlistButtonActive: {
     backgroundColor: Colors.light.cardBackground,
