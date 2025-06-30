@@ -1,75 +1,382 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TextInput, 
+  SafeAreaView, 
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+  RefreshControl
+} from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { StockCard } from '@/components/StockCard';
+import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/Fonts';
+import { apiService, formatStockData, StockQuote } from '@/services/api';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+interface FormattedStockData {
+  symbol: string;
+  name: string;
+  price: string;
+  change: string;
+  isPositive: boolean;
+  icon: string;
+}
 
 export default function HomeScreen() {
+  const [topGainersData, setTopGainersData] = useState<FormattedStockData[]>([]);
+  const [topLosersData, setTopLosersData] = useState<FormattedStockData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMarketData = async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      const response = await apiService.getTopGainersLosers();
+      
+      // Format the data for our UI components
+      const formattedGainers = response.top_gainers.slice(0, 4).map(formatStockData);
+      const formattedLosers = response.top_losers.slice(0, 4).map(formatStockData);
+      
+      setTopGainersData(formattedGainers);
+      setTopLosersData(formattedLosers);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch market data';
+      setError(errorMessage);
+      console.error('Error fetching market data:', err);
+      
+      // Show alert for errors
+      Alert.alert(
+        'Error',
+        errorMessage,
+        [
+          { text: 'Retry', onPress: () => fetchMarketData() },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMarketData();
+  }, []);
+
+  const onRefresh = () => {
+    fetchMarketData(true);
+  };
+
+  const renderLoadingState = () => (
+    <View style={styles.centerContainer}>
+      <ActivityIndicator size="large" color={Colors.light.tint} />
+      <Text style={styles.loadingText}>Loading market data...</Text>
+    </View>
+  );
+
+  const renderErrorState = () => (
+    <View style={styles.centerContainer}>
+      <MaterialIcons name="error-outline" size={48} color={Colors.light.danger} />
+      <Text style={styles.errorText}>Failed to load market data</Text>
+      <TouchableOpacity style={styles.retryButton} onPress={() => fetchMarketData()}>
+        <Text style={styles.retryButtonText}>Retry</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading && topGainersData.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+        {renderLoadingState()}
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.profileSection}>
+            <Image 
+              source={require('../../assets/externalassets/profile image placeholder.png')}
+              style={styles.profileImage}
+            />
+            <View style={styles.welcomeText}>
+              <Text style={styles.welcomeBack}>Welcome back</Text>
+              <Text style={styles.userName}>Sophia Calzoni</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Image 
+              source={require('../../assets/externalassets/notification bell.png')}
+              style={styles.notificationIcon}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <MaterialIcons name="search" size={20} color="#9CA3AF" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search here"
+            placeholderTextColor="#9CA3AF"
+          />
+        </View>
+
+        {error && !loading && (
+          <View style={styles.errorBanner}>
+            <MaterialIcons name="warning" size={20} color={Colors.light.danger} />
+            <Text style={styles.errorBannerText}>{error}</Text>
+            <TouchableOpacity onPress={() => setError(null)}>
+              <MaterialIcons name="close" size={20} color={Colors.light.danger} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Top Gainers Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Top Gainers</Text>
+            <TouchableOpacity onPress={() => router.push('/top-gainers')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {topGainersData.length > 0 ? (
+            <View style={styles.stockGrid}>
+              {topGainersData.map((stock, index) => (
+                <View key={`gainer-${stock.symbol}-${index}`} style={styles.stockCardContainer}>
+                  <StockCard
+                    symbol={stock.symbol}
+                    name={stock.name}
+                    price={stock.price}
+                    change={stock.change}
+                    isPositive={stock.isPositive}
+                    icon={stock.icon as keyof typeof MaterialIcons.glyphMap}
+                    onPress={() => router.push(`/stock-details?symbol=${stock.symbol}`)}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No gainers data available</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Top Losers Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Top Losers</Text>
+            <TouchableOpacity onPress={() => router.push('/top-losers')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {topLosersData.length > 0 ? (
+            <View style={styles.stockGrid}>
+              {topLosersData.map((stock, index) => (
+                <View key={`loser-${stock.symbol}-${index}`} style={styles.stockCardContainer}>
+                  <StockCard
+                    symbol={stock.symbol}
+                    name={stock.name}
+                    price={stock.price}
+                    change={stock.change}
+                    isPositive={stock.isPositive}
+                    icon={stock.icon as keyof typeof MaterialIcons.glyphMap}
+                    onPress={() => router.push(`/stock-details?symbol=${stock.symbol}`)}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No losers data available</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.secondary,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.light.textSecondary,
+    fontFamily: FontFamily.regular,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.light.danger,
+    fontFamily: FontFamily.regular,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: Colors.light.tint,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: FontFamily.bold,
+  },
+  errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  errorBannerText: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.light.danger,
+    fontFamily: FontFamily.regular,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  emptyState: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: Colors.light.textSecondary,
+    fontFamily: FontFamily.regular,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: Colors.light.cardBackground,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  welcomeText: {
+    flex: 1,
+  },
+  welcomeBack: {
+    fontSize: 14,
+    color: Colors.light.textTertiary,
+    fontFamily: FontFamily.regular,
+  },
+  userName: {
+    fontSize: 20,
+    fontFamily: FontFamily.bold,
+    color: Colors.light.textPrimary,
+    marginTop: 2,
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationIcon: {
+    width: 24,
+    height: 24,
+    tintColor: Colors.light.textSecondary,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.cardBackground,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6F4F8',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: Colors.light.textPrimary,
+    fontFamily: FontFamily.regular,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: FontFamily.bold,
+    color: Colors.light.textPrimary,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontFamily: FontFamily.bold,
+    color: '#5367ff',
+  },
+  stockGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  stockCardContainer: {
+    width: '48%',
   },
 });

@@ -3,13 +3,20 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import {
+  Roboto_400Regular,
+  Roboto_700Bold,
+} from '@expo-google-fonts/roboto';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { WatchlistProvider } from '@/contexts/WatchlistContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Roboto_400Regular,
+    Roboto_700Bold,
   });
 
   if (!loaded) {
@@ -19,11 +26,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <WatchlistProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="top-gainers" options={{ headerShown: false }} />
+          <Stack.Screen name="top-losers" options={{ headerShown: false }} />
+          <Stack.Screen name="stock-details" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </WatchlistProvider>
     </ThemeProvider>
   );
 }
