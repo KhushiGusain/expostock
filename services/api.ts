@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cacheManager, CACHE_EXPIRY, CACHE_KEYS } from '@/utils/cache';
 
 // Use environment variable for API key or fallback to demo
 const ALPHA_VANTAGE_API_KEY = process.env.EXPO_PUBLIC_ALPHA_VANTAGE_API_KEY || 'demo';
@@ -94,9 +95,39 @@ class ApiService {
     this.apiKey = apiKey;
   }
 
+  // Cache utility methods
+  async clearCache(): Promise<void> {
+    await cacheManager.clear();
+    console.log('API cache cleared');
+  }
+
+  async clearStockCache(symbol: string): Promise<void> {
+    await Promise.all([
+      cacheManager.remove(CACHE_KEYS.COMPANY_OVERVIEW(symbol)),
+      cacheManager.remove(CACHE_KEYS.QUOTE(symbol)),
+      cacheManager.remove(CACHE_KEYS.DAILY_DATA(symbol)),
+    ]);
+    console.log(`Cache cleared for ${symbol}`);
+  }
+
+  async getCacheStats(): Promise<{ size: number }> {
+    const size = await cacheManager.getSize();
+    return { size };
+  }
+
   // Get top gainers and losers
   async getTopGainersLosers(): Promise<TopGainersLosersResponse> {
+    const cacheKey = CACHE_KEYS.TOP_GAINERS_LOSERS;
+    
     try {
+      // Check cache first
+      const cachedData = await cacheManager.get<TopGainersLosersResponse>(cacheKey);
+      if (cachedData) {
+        console.log('Returning cached top gainers/losers data');
+        return cachedData;
+      }
+
+      console.log('Fetching fresh top gainers/losers data');
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'TOP_GAINERS_LOSERS',
@@ -113,6 +144,9 @@ class ApiService {
       if (response.data.Information) {
         throw new Error('API rate limit exceeded. Please try again later.');
       }
+
+      // Cache the response for 2 minutes (market data changes frequently)
+      await cacheManager.set(cacheKey, response.data, CACHE_EXPIRY.SHORT * 2);
 
       return response.data;
     } catch (error) {
@@ -131,7 +165,17 @@ class ApiService {
 
   // Get company overview
   async getCompanyOverview(symbol: string): Promise<CompanyOverview> {
+    const cacheKey = CACHE_KEYS.COMPANY_OVERVIEW(symbol);
+    
     try {
+      // Check cache first
+      const cachedData = await cacheManager.get<CompanyOverview>(cacheKey);
+      if (cachedData) {
+        console.log(`Returning cached company overview for ${symbol}`);
+        return cachedData;
+      }
+
+      console.log(`Fetching fresh company overview for ${symbol}`);
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'OVERVIEW',
@@ -139,6 +183,10 @@ class ApiService {
           apikey: this.apiKey,
         },
       });
+
+      // Cache for 30 minutes (company info doesn't change frequently)
+      await cacheManager.set(cacheKey, response.data, CACHE_EXPIRY.LONG);
+
       return response.data;
     } catch (error) {
       console.error(`Error fetching company overview for ${symbol}:`, error);
@@ -148,7 +196,17 @@ class ApiService {
 
   // Get real-time price quote
   async getQuote(symbol: string): Promise<any> {
+    const cacheKey = CACHE_KEYS.QUOTE(symbol);
+    
     try {
+      // Check cache first
+      const cachedData = await cacheManager.get<any>(cacheKey);
+      if (cachedData) {
+        console.log(`Returning cached quote for ${symbol}`);
+        return cachedData;
+      }
+
+      console.log(`Fetching fresh quote for ${symbol}`);
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'GLOBAL_QUOTE',
@@ -156,6 +214,10 @@ class ApiService {
           apikey: this.apiKey,
         },
       });
+
+      // Cache for 1 minute (price data changes frequently)
+      await cacheManager.set(cacheKey, response.data, CACHE_EXPIRY.SHORT);
+
       return response.data;
     } catch (error) {
       console.error(`Error fetching quote for ${symbol}:`, error);
@@ -165,7 +227,17 @@ class ApiService {
 
   // Get daily time series data for charts
   async getDailyData(symbol: string): Promise<any> {
+    const cacheKey = CACHE_KEYS.DAILY_DATA(symbol);
+    
     try {
+      // Check cache first
+      const cachedData = await cacheManager.get<any>(cacheKey);
+      if (cachedData) {
+        console.log(`Returning cached daily data for ${symbol}`);
+        return cachedData;
+      }
+
+      console.log(`Fetching fresh daily data for ${symbol}`);
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'TIME_SERIES_DAILY',
@@ -173,6 +245,10 @@ class ApiService {
           apikey: this.apiKey,
         },
       });
+
+      // Cache for 5 minutes (daily data doesn't change during trading day)
+      await cacheManager.set(cacheKey, response.data, CACHE_EXPIRY.MEDIUM);
+
       return response.data;
     } catch (error) {
       console.error(`Error fetching daily data for ${symbol}:`, error);
@@ -188,6 +264,16 @@ class ApiService {
         return { bestMatches: [] };
       }
 
+      const cacheKey = CACHE_KEYS.SEARCH(query);
+      
+      // Check cache first
+      const cachedData = await cacheManager.get<SymbolSearchResponse>(cacheKey);
+      if (cachedData) {
+        console.log(`Returning cached search results for "${query}"`);
+        return cachedData;
+      }
+
+      console.log(`Fetching fresh search results for "${query}"`);
       const response = await axios.get(BASE_URL, {
         params: {
           function: 'SYMBOL_SEARCH',
@@ -210,6 +296,9 @@ class ApiService {
       if (!response.data.bestMatches) {
         return { bestMatches: [] };
       }
+
+      // Cache search results for 5 minutes
+      await cacheManager.set(cacheKey, response.data, CACHE_EXPIRY.MEDIUM);
 
       return response.data;
     } catch (error) {
