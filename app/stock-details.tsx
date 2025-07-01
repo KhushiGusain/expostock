@@ -16,6 +16,7 @@ import { Colors } from '@/constants/Colors';
 import { FontFamily } from '@/constants/Fonts';
 import { apiService, CompanyOverview } from '@/services/api';
 import { useWatchlist } from '@/contexts/WatchlistContext';
+import WatchlistModal from '@/components/WatchlistModal';
 
 interface StockDetailsData {
   symbol: string;
@@ -170,19 +171,13 @@ export default function StockDetailsScreen() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1M');
+  const [watchlistModalVisible, setWatchlistModalVisible] = useState(false);
+  const [isDataFromCache, setIsDataFromCache] = useState(false);
   const { watchlists, addWatchlist, addStockToWatchlist, removeStockFromWatchlist, isStockInAnyWatchlist } = useWatchlist();
   
   const isWatchlisted = isStockInAnyWatchlist(symbol || '');
   
-  // Get or create default watchlist
-  const getDefaultWatchlist = () => {
-    let defaultWatchlist = watchlists.find(w => w.name === 'My Watchlist');
-    if (!defaultWatchlist) {
-      addWatchlist('My Watchlist');
-      defaultWatchlist = watchlists.find(w => w.name === 'My Watchlist');
-    }
-    return defaultWatchlist;
-  };
+
 
   const timeframes = ['1D', '1W', '1M', '1Y', '5Y', 'ALL'];
 
@@ -318,25 +313,21 @@ export default function StockDetailsScreen() {
     return value.toString();
   };
 
-  const handleWatchlistToggle = () => {
-    if (!stockData) return;
+  const getStockForModal = () => {
+    if (!stockData) return null;
     
-    const defaultWatchlist = getDefaultWatchlist();
-    if (!defaultWatchlist) return;
-    
-    if (isWatchlisted) {
-      removeStockFromWatchlist(defaultWatchlist.id, stockData.symbol);
-    } else {
-      const stockToAdd = {
-        symbol: stockData.symbol,
-        name: stockData.name,
-        price: stockData.price,
-        change: stockData.changePercent,
-        isPositive: stockData.isPositive,
-        icon: 'business',
-      };
-      addStockToWatchlist(defaultWatchlist.id, stockToAdd);
-    }
+    return {
+      symbol: stockData.symbol,
+      name: stockData.name,
+      price: stockData.price,
+      change: stockData.changePercent,
+      isPositive: stockData.isPositive,
+      icon: getSectorIcon(stockData.sector),
+    };
+  };
+
+  const handleWatchlistPress = () => {
+    setWatchlistModalVisible(true);
   };
 
   if (loading) {
@@ -404,7 +395,13 @@ export default function StockDetailsScreen() {
           <MaterialIcons name="arrow-back" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{stockData.symbol} Details</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity style={styles.watchlistIconButton} onPress={handleWatchlistPress}>
+          <MaterialIcons 
+            name={isWatchlisted ? "bookmark" : "bookmark-border"} 
+            size={24} 
+            color={isWatchlisted ? "#11B981" : Colors.light.textPrimary} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -549,14 +546,29 @@ export default function StockDetailsScreen() {
 
         {/* Add to Watchlist Button */}
         <TouchableOpacity 
-          style={[styles.watchlistButton, isWatchlisted && styles.watchlistButtonActive]} 
-          onPress={handleWatchlistToggle}
+          style={styles.watchlistButton} 
+          onPress={handleWatchlistPress}
         >
-          <Text style={[styles.watchlistButtonText, isWatchlisted && styles.watchlistButtonTextActive]}>
-            {isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+          <MaterialIcons 
+            name={isWatchlisted ? "bookmark" : "bookmark-border"} 
+            size={20} 
+            color="white" 
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.watchlistButtonText}>
+            {isWatchlisted ? 'Manage Watchlists' : 'Add to Watchlist'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      
+      {/* Watchlist Modal */}
+      {stockData && getStockForModal() && (
+        <WatchlistModal
+          visible={watchlistModalVisible}
+          onClose={() => setWatchlistModalVisible(false)}
+          stock={getStockForModal()!}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -834,24 +846,26 @@ const styles = StyleSheet.create({
     color: Colors.light.textPrimary,
     fontFamily: FontFamily.bold,
   },
+  watchlistIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   watchlistButton: {
     backgroundColor: '#11B981',
     borderRadius: 10,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 32,
-  },
-  watchlistButtonActive: {
-    backgroundColor: Colors.light.cardBackground,
-    borderWidth: 2,
-    borderColor: '#11B981',
   },
   watchlistButtonText: {
     color: 'white',
     fontSize: 16,
     fontFamily: FontFamily.bold,
-  },
-  watchlistButtonTextActive: {
-    color: '#11B981',
   },
 }); 
